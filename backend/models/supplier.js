@@ -1,5 +1,4 @@
 const mongoose = require('mongoose');
-const Collector = require('./collector');
 const Schema = mongoose.Schema;
 
 const supplierSchema = new Schema({
