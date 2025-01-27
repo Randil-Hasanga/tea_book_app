@@ -25,5 +25,4 @@ const salarySchema = new Schema({
 }, { timestamps: true });
 
 const Salary = mongoose.model('Salary', salarySchema);
-
 module.exports = Salary;
