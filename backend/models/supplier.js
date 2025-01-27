@@ -2,6 +2,11 @@ const mongoose = require('mongoose');
 const Schema = mongoose.Schema;
 
 const supplierSchema = new Schema({
+    user_id: {
+        type: Schema.Types.ObjectId,
+        ref: 'User',
+        required: true,
+    },
     supplier_name: {
         type: String,
         required: true
@@ -10,10 +15,6 @@ const supplierSchema = new Schema({
         type: String,
         required: true,
         unique: true
-    },
-    supplier_password: {
-        type: String,
-        required: true
     },
     supplier_phone: {
         type: String,

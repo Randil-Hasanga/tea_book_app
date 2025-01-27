@@ -12,10 +12,12 @@ app.use(express.json());
 const collectorRoute = require('./routes/collectorRoute');
 const supplierRoute = require('./routes/supplierRoute');
 const deliveryRoute = require('./routes/deliveryRoute');
+const userRoute = require('./routes/userRoute');
 
 // Use Routes
 app.use('/collector', collectorRoute);
 app.use('/supplier', supplierRoute);
 app.use('/delivery', deliveryRoute);
+app.use('/user', userRoute);
 
 module.exports = app;

@@ -1,4 +1,5 @@
 const Supplier = require('../models/supplier');
+const User = require('../models/user');
 
 const supplierService = {
     async getSuppliers(filters = {}) { // can use for get deleted collectors also
@@ -11,13 +12,49 @@ const supplierService = {
         }
     },
     async createSupplier(data) {
+        const session = await Supplier.startSession();
+        session.startTransaction();
         try {
-            const supplier = new Supplier(data);
-            await supplier.save();
+            const {
+                supplier_name,
+                supplier_email,
+                supplier_password,
+                supplier_phone,
+                supplier_NIC,
+                created_by,
+                isActive
+            } = data;
+
+            const user = new User({
+                email: supplier_email,
+                password: supplier_password,
+                role: 'supplier'
+            });
+            await user.save({ session });
+
+            const user_id = user._id;
+
+            const supplier = new Supplier({
+                user_id,
+                supplier_name,
+                supplier_email,
+                supplier_phone,
+                supplier_NIC,
+                created_by,
+                isActive,
+            });
+            await supplier.save({ session });
+
+            await session.commitTransaction();
+            session.endSession();
+
             return supplier;
         } catch (error) {
-            console.error('Error creating collector:', error.message);
-            throw new Error('Could not create collector');
+            await session.abortTransaction();
+            session.endSession();
+
+            console.error('Error creating supplier:', error.message);
+            throw new Error('Could not create supplier');
         }
     },
     async updateSupplier(id, data) { // can use for soft delete also

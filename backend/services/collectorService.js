@@ -1,4 +1,5 @@
 const Collector = require('../models/collector');
+const User = require('../models/user');
 
 const collectorService = {
     async getCollectors(filters = {}) { // can use for get deleted collectors also
@@ -11,11 +12,47 @@ const collectorService = {
         }
     },
     async createCollector(data) {
+        const session = await Collector.startSession();
+        session.startTransaction();
         try {
-            const collector = new Collector(data);
-            await collector.save();
+            const {
+                collector_name,
+                collector_email,
+                collector_password,
+                collector_phone,
+                collector_NIC,
+                created_by,
+                isActive
+            } = data;
+
+            const user = new User({
+                email: collector_email,
+                password: collector_password,
+                role: 'collector'
+            });
+            await user.save({ session });
+
+            const user_id = user._id;
+
+            const collector = new Collector({
+                user_id,
+                collector_name,
+                collector_email,
+                collector_phone,
+                collector_NIC,
+                created_by,
+                isActive,
+            });
+            await collector.save({ session });
+
+            await session.commitTransaction();
+            session.endSession();
+
             return collector;
         } catch (error) {
+            await session.abortTransaction();
+            session.endSession();
+
             console.error('Error creating collector:', error.message);
             throw new Error('Could not create collector');
         }
@@ -36,7 +73,7 @@ const collectorService = {
             throw new Error('Could not update collector');
         }
     }
-    
+
 
 }
 

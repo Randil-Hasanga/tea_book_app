@@ -2,6 +2,11 @@ const mongoose = require('mongoose');
 const Schema = mongoose.Schema;
 
 const collectorSchema = new Schema({
+    user_id: {
+        type: Schema.Types.ObjectId,
+        ref: 'User',
+        required: true,
+    },
     collector_name: {
         type: String,
         required: true
@@ -10,10 +15,6 @@ const collectorSchema = new Schema({
         type: String,
         required: true,
         unique: true
-    },
-    collector_password: {
-        type: String,
-        required: true
     },
     collector_phone: {
         type: String,

@@ -4,5 +4,6 @@ const router = express.Router();
 
 router
     .post('/', deliveryController.createDelivery)
+    .delete('/:deliveryId', deliveryController.deleteDelivery)
 
 module.exports = router;
