@@ -11,6 +11,23 @@ const supplierService = {
             throw new Error('Could not fetch suppliers');
         }
     },
+    async getSuppliersByCreatedBy(collector_id) {
+        try {
+            // Fetch suppliers created by the given collector ID
+            const suppliers = await Supplier.find({ created_by: collector_id });
+
+            // Get the count of suppliers
+            const count = suppliers.length;
+
+            return {
+                count, // Total number of suppliers
+                suppliers, // Array of supplier objects
+            };
+        } catch (error) {
+            console.error('Error fetching suppliers:', error.message);
+            throw new Error('Could not fetch suppliers');
+        }
+    },
     async createSupplier(data) {
         const session = await Supplier.startSession();
         session.startTransaction();

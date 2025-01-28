@@ -18,6 +18,15 @@ const supplierController = {
             res.status(500).json({ message: 'Error fetching suppliers', error: error.message });
         }
     },
+    getSuppliersByCreatedBy: async (req, res) => {
+        try {
+            const { collector_id } = req.params;
+            const suppliers = await supplierService.getSuppliersByCreatedBy(collector_id);
+            res.status(200).json({ message: 'Suppliers fetched successfully', data: suppliers });
+        } catch (error) {
+            res.status(500).json({ message: 'Error fetching suppliers', error: error.message });
+        }
+    },
     createSupplier: async (req, res) => {
         try {
             const supplier = await supplierService.createSupplier(req.body);

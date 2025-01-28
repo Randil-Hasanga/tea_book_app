@@ -3,10 +3,13 @@ const collectorService = require('../services/collectorService');
 const collectorController = {
     getCollectors: async (req, res) => {
         try {
-            const { id, isActive } = req.query;
+            const { id, isActive, user_id } = req.query;
             let filters = {};
             if (id) {
                 filters._id = id;
+            }
+            if(user_id){
+                filters.user_id = user_id;
             }
             if (isActive) {
                 filters.isActive = isActive === 'true';

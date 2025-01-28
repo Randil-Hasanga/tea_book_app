@@ -1,3 +1,5 @@
+import 'dart:ui';
+
 import 'package:flutter/material.dart';
 import 'package:frontend/services/user_services.dart';
 import 'package:get_it/get_it.dart';
@@ -22,6 +24,8 @@ class _LoginState extends State<Login> {
 
   final dio = Dio();
 
+  bool _isLoading = false;
+
   @override
   void initState() {
     super.initState();
@@ -31,6 +35,10 @@ class _LoginState extends State<Login> {
 
   Future<void> _login() async {
     if (_formKey.currentState?.validate() ?? false) {
+      setState(() {
+        _isLoading = true;
+      });
+
       try {
         final response = await dio.post(
           '${_userServices!.base_url}/user/login',
@@ -40,24 +48,41 @@ class _LoginState extends State<Login> {
           },
         );
 
+        print('user role ${response.data['user']['role']}');
+
         if (response.statusCode == 200) {
-          // Handle successful login
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-                content: Text('Login successful: ${response.data['message']}')),
-          );
+
+          _userServices!.user_id = response.data['user']['id'];
+          final role =
+              response.data['user']['role'];
+          switch (role) {
+            case 'admin':
+              Navigator.popAndPushNamed(context, '/admin_dashboard');
+              break;
+            case 'supplier':
+              Navigator.popAndPushNamed(context, '/supplier_dashboard');
+              break;
+            case 'collector':
+              Navigator.popAndPushNamed(context, '/collector_dashboard');
+              break;
+            default:
+              Navigator.popAndPushNamed(context, '/login');
+              break;
+          }
         } else {
-          // Handle login failure
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(content: Text('Login failed: ${response.data['error']}')),
           );
         }
       } catch (e) {
-        // Handle network or unexpected errors
         print('Error during login: $e');
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text('An error occurred. Please try again.')),
         );
+      } finally {
+        setState(() {
+          _isLoading = false;
+        });
       }
     }
   }
@@ -71,11 +96,33 @@ class _LoginState extends State<Login> {
         backgroundColor: Colors.green,
       ),
       body: SafeArea(
-        child: Padding(
-          padding: const EdgeInsets.all(20.0),
-          child: _loginForm(),
+        child: Stack(
+          children: [
+            Padding(
+              padding: const EdgeInsets.all(20.0),
+              child: _loginForm(),
+            ),
+            if (_isLoading)
+              _blurredLoadingScreen(),
+          ],
         ),
       ),
+    );
+  }
+
+  Widget _blurredLoadingScreen() {
+    return Stack(
+      children: [
+        BackdropFilter(
+          filter: ImageFilter.blur(sigmaX: 5.0, sigmaY: 5.0),
+          child: Container(
+            color: Colors.black.withOpacity(0.5),
+          ),
+        ),
+        const Center(
+          child: CircularProgressIndicator(color: Colors.white),
+        ),
+      ],
     );
   }
 
@@ -102,7 +149,7 @@ class _LoginState extends State<Login> {
           const SizedBox(height: 40),
           _loginButton(),
           const SizedBox(height: 20),
-          _forgotPasswordButton()
+          _forgotPasswordButton(),
         ],
       ),
     );
@@ -160,7 +207,7 @@ class _LoginState extends State<Login> {
   Widget _forgotPasswordButton() {
     return TextButton(
       onPressed: () {
-        //Handle forgot password logic
+        // Handle forgot password logic
       },
       child: const Text(
         'Forgot Password?',
