@@ -14,6 +14,7 @@ const supplierRoute = require('./routes/supplierRoute');
 const deliveryRoute = require('./routes/deliveryRoute');
 const userRoute = require('./routes/userRoute');
 const salaryRoute = require('./routes/salaryRoute');
+const priceRoute = require('./routes/priceRoute');
 
 // Use Routes
 app.use('/collector', collectorRoute);
@@ -21,5 +22,6 @@ app.use('/supplier', supplierRoute);
 app.use('/delivery', deliveryRoute);
 app.use('/user', userRoute);
 app.use('/salary', salaryRoute);
+app.use('/price', priceRoute);
 
 module.exports = app;

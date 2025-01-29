@@ -64,7 +64,6 @@ class _CollectTeaState extends State<CollectTea> {
 
   void clearForm() {
     setState(() {
-      selectedSupplierId = null;
       selectedSupplierName = null;
       _totalWeightController.clear();
       _bagWeightController.clear();

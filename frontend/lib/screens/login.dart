@@ -1,6 +1,7 @@
 import 'dart:ui';
 
 import 'package:flutter/material.dart';
+import 'package:flutter/widgets.dart';
 import 'package:frontend/services/user_services.dart';
 import 'package:get_it/get_it.dart';
 import 'package:dio/dio.dart';
@@ -53,6 +54,7 @@ class _LoginState extends State<Login> {
         if (response.statusCode == 200) {
 
           _userServices!.user_id = response.data['user']['id'];
+          _userServices!.role = response.data['user']['role'];
           final role =
               response.data['user']['role'];
           switch (role) {
@@ -60,7 +62,7 @@ class _LoginState extends State<Login> {
               Navigator.popAndPushNamed(context, '/admin_dashboard');
               break;
             case 'supplier':
-              Navigator.popAndPushNamed(context, '/supplier_dashboard');
+              Navigator.popAndPushNamed(context, '/supplier-dashboard');
               break;
             case 'collector':
               Navigator.popAndPushNamed(context, '/collector_dashboard');
@@ -136,7 +138,7 @@ class _LoginState extends State<Login> {
             style: TextStyle(
               fontSize: 24,
               fontWeight: FontWeight.bold,
-              color: Colors.green,
+              color: Color(0xFF13AA52),
             ),
           ),
           const SizedBox(height: 40),
@@ -193,11 +195,13 @@ class _LoginState extends State<Login> {
     return ElevatedButton(
       onPressed: _login,
       style: ElevatedButton.styleFrom(
-        backgroundColor: Colors.green,
+        backgroundColor: Color(0xFF13AA52),
         padding: const EdgeInsets.symmetric(vertical: 15),
         textStyle: const TextStyle(fontSize: 18),
       ),
-      child: const Text('Login'),
+      child: const Text('Login',style: TextStyle(
+        color: Colors.white
+      ),),
     );
   }
 
@@ -208,7 +212,7 @@ class _LoginState extends State<Login> {
       },
       child: const Text(
         'Forgot Password?',
-        style: TextStyle(color: Colors.green),
+        style: TextStyle(color: Color(0xFF13AA52)),
       ),
     );
   }

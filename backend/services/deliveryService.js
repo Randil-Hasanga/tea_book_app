@@ -82,9 +82,22 @@ const deliveryService = {
             throw new Error('Could not get recent deliveries');
         }
     },    
-    getDeliveriesBySupplier: async () => {
+    getDeliveriesBySupplier: async (supplierId, month, year) => {
         try {
-            const deliveries = await Delivery.find().populate('supplied_by');
+            // Calculate the start and end dates for the month
+            const startDate = new Date(year, month - 1, 1); // First day of the month
+            const endDate = new Date(year, month, 0, 23, 59, 59, 999); // Last day of the month
+    
+            const deliveries = await Delivery.find({
+                supplied_by: supplierId, // Filter by collector
+                createdAt: {
+                    $gte: startDate, // Created at or after the start date
+                    $lt: endDate // Created before the end date
+                }
+            })
+                .populate('collected_by') // Populate the 'collected_by' field
+                .populate('supplied_by', 'supplier_name supplier_email supplier_phone'); // Populate 'supplied_by' with specific fields
+    
             return deliveries;
         } catch (error) {
             console.error('Error getting deliveries:', error.message);

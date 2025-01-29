@@ -5,17 +5,17 @@ import 'package:dio/dio.dart';
 import 'package:get_it/get_it.dart';
 import 'package:intl/intl.dart';
 
-class DeliveriesPage extends StatefulWidget {
-  const DeliveriesPage({super.key});
+class SupplierDeliveriesPage extends StatefulWidget {
+  const SupplierDeliveriesPage({super.key});
 
   @override
-  State<DeliveriesPage> createState() => _DeliveriesPageState();
+  State<SupplierDeliveriesPage> createState() => _SupplierDeliveriesPageState();
 }
 
-class _DeliveriesPageState extends State<DeliveriesPage> {
+class _SupplierDeliveriesPageState extends State<SupplierDeliveriesPage> {
   final dio = Dio();
   UserServices? _userServices;
-  String? _collectorId;
+  String? _supplierId;
   List<Map<String, dynamic>> deliveries = [];
   List<Map<String, dynamic>> filteredDeliveries = [];
   final TextEditingController _searchController = TextEditingController();
@@ -37,9 +37,9 @@ class _DeliveriesPageState extends State<DeliveriesPage> {
   Future<void> _initializeDashboard({int? month, int? year}) async {
   try {
     setState(() {
-      _collectorId = _userServices!.collector_id;
+      _supplierId = _userServices!.supplier_id;
     });
-    print('collector id: $_collectorId');
+    print('supplier id: $_supplierId');
     print(year);
 
     final now = DateTime.now();
@@ -47,21 +47,21 @@ class _DeliveriesPageState extends State<DeliveriesPage> {
     final int currentYear = year ?? now.year;
 
     final deliveriesURL =
-        '${_userServices!.base_url}/delivery?collectorId=$_collectorId&month=$currentMonth&year=$currentYear';
+        '${_userServices!.base_url}/delivery/supplier?supplierId=$_supplierId&month=$currentMonth&year=$currentYear';
 
     final response = await dio.get(deliveriesURL);
 
     final data = response.data;
 
     if (response.statusCode == 404) {
-      print("No deliveries found for this collector");
+      print("No deliveries found from this supplier");
       setState(() {
         deliveries = [];
         filteredDeliveries = [];
       });
     } else if (data is Map<String, dynamic> && data['message'] != null) {
       // Handle the case where there is a message indicating no deliveries
-      print("No deliveries found for this collector");
+      print("No deliveries found from this supplier");
       setState(() {
         deliveries = [];
         filteredDeliveries = [];
@@ -129,6 +129,7 @@ class _DeliveriesPageState extends State<DeliveriesPage> {
       itemBuilder: (context, index) {
         final delivery = filteredDeliveries[index];
         final supplier = delivery['supplied_by'];
+        final collector = delivery['collected_by'];
         final formattedDate = DateFormat('yyyy-MM-dd HH:mm')
             .format(DateTime.parse(delivery['createdAt']));
 
@@ -150,7 +151,7 @@ class _DeliveriesPageState extends State<DeliveriesPage> {
                 child: ListTile(
                   contentPadding: const EdgeInsets.all(8.0),
                   title: Text(
-                    supplier['supplier_name'],
+                    '${collector['collector_name']}',
                     style: const TextStyle(
                       fontWeight: FontWeight.bold,
                       fontSize: 18,
@@ -160,7 +161,7 @@ class _DeliveriesPageState extends State<DeliveriesPage> {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       const SizedBox(height: 4),
-                      Text('Phone: ${supplier['supplier_phone']}'),
+                      Text('Phone: ${collector['collector_phone']}'),
                       Text('Net Weight: ${delivery['net_weight']} kg'),
                       Text('Date: $formattedDate'),
                     ],

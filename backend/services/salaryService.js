@@ -1,7 +1,18 @@
 const Salary = require('../models/salary');
 
 const SalaryService = {
-    getNetWeightForMonth: async (supplier_id) => {
+    getSalaries: async (supplier_id) => {
+        try {
+            let salaries = await Salary.find({
+                supplier_id
+            });
+            return salaries;
+        } catch (error) {
+            console.error('Error fetching suppliers:', error.message);
+            throw new Error('Could not fetch suppliers');
+        }
+    },
+    getSalaryForSupplier: async (supplier_id) => {
         try {
             const date = new Date();
             const year = date.getFullYear();

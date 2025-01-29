@@ -1,8 +1,6 @@
 import 'dart:ui';
-import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:dio/dio.dart';
-import 'package:flutter/widgets.dart';
 import 'package:frontend/services/user_services.dart';
 import 'package:frontend/widgets/rounded_card.dart';
 import 'package:get_it/get_it.dart';
@@ -22,7 +20,7 @@ class _CollectorDashboardState extends State<CollectorDashboard> {
       deliveriesResponse,
       suppliersResponse,
       collecotrDeliveriesResponse;
-  String? collectorName = 'Collector', collector_id;
+  String? collectorName = 'Collector', collector_id, role;
   bool isLoading = true;
 
   @override
@@ -39,6 +37,8 @@ class _CollectorDashboardState extends State<CollectorDashboard> {
       final result = await dio.get(userDetailsURL);
 
       collector_id = result.data['data'][0]['_id'];
+      role = _userServices!.role;
+      print('user role :::::::::::: ${role}');
       _userServices!.collector_id = collector_id;
 
       final deliveriesURL =

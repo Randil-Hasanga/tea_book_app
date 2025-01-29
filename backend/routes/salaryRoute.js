@@ -3,6 +3,7 @@ const salaryController = require('../controllers/salaryController');
 const router = express.Router();
 
 router
-    .get('/:supplierId', salaryController.getNetWeightForMonth);
+    .get('/:supplierId', salaryController.getSalaryForSupplier)
+    .get('/all/:supplierId', salaryController.getSalaries)
 
 module.exports = router;
