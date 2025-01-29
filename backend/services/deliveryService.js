@@ -24,7 +24,7 @@ const deliveryService = {
             throw new Error('Could not get deliveries');
         }
     },
-    getRecentDeliveriesForCurrentMonth: async (collectorId) => {
+    getRecentDeliveriesForCurrentMonthByCollectedBy: async (collectorId) => {
         try {
             // Get the current month and year
             const currentDate = new Date();
@@ -45,7 +45,36 @@ const deliveryService = {
             // Sort deliveries by createdAt (newest to oldest) and limit to 5 results
             const sortedAndLimitedDeliveries = deliveries
                 .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt)) // Sort from newest to oldest
-                .slice(0, 5); // Limit to 5 results
+                .slice(0, 3); // Limit to 5 results
+    
+            return sortedAndLimitedDeliveries;
+        } catch (error) {
+            console.error('Error fetching recent deliveries:', error.message);
+            throw new Error('Could not get recent deliveries');
+        }
+    },
+    getRecentDeliveriesForCurrentMonthBySuppliedBy: async (supplierId) => {
+        try {
+            // Get the current month and year
+            const currentDate = new Date();
+            const currentMonth = currentDate.getMonth() + 1; // Months are zero-indexed, so add 1
+            const currentYear = currentDate.getFullYear();
+    
+            // Find deliveries based on the current month and year
+            const deliveries = await Delivery.find({
+                supplied_by: supplierId,
+                createdAt: {
+                    $gte: new Date(currentYear, currentMonth - 1, 1), // Start of the current month
+                    $lt: new Date(currentYear, currentMonth, 0),      // End of the current month
+                },
+            })
+            .populate('collected_by')  // Populate the 'collected_by' field
+            .populate('supplied_by', 'supplier_name supplier_email supplier_phone')  // Populate the 'supplied_by' field
+    
+            // Sort deliveries by createdAt (newest to oldest) and limit to 5 results
+            const sortedAndLimitedDeliveries = deliveries
+                .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt)) // Sort from newest to oldest
+                .slice(0, 3); // Limit to 5 results
     
             return sortedAndLimitedDeliveries;
         } catch (error) {

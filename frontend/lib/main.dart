@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:frontend/screens/collector/collect_tea.dart';
 import 'package:frontend/screens/collector/collector_dashboard.dart';
+import 'package:frontend/screens/collector/deliveries_page.dart';
 import 'package:frontend/screens/collector/supplier_page.dart';
 import 'package:frontend/screens/login.dart';
 import 'package:frontend/services/user_services.dart';
@@ -27,8 +29,10 @@ class MyApp extends StatelessWidget {
       initialRoute: '/login',
       routes: {
         '/login': (context) => Login(),
-        '/suppliers': (context) => const SupplierPage(),
-        '/collector_dashboard': (context) => CollectorDashboard()
+        '/collector-suppliers': (context) => const SupplierPage(),
+        '/collector-deliveries': (context) => DeliveriesPage(),
+        '/collector_dashboard': (context) => CollectorDashboard(),
+        '/collect-tea': (context) => CollectTea()
         },
       home: const Login(),
     );

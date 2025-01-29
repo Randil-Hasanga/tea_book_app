@@ -40,10 +40,19 @@ const deliveryController = {
             res.status(500).json({ message: 'Error getting deliveries', error: error.message });
         }
     },
-    getRecentDeliveriesForCurrentMonth: async (req,res) => {
+    getRecentDeliveriesForCurrentMonthByCollectedBy: async (req,res) => {
         try {
             const { collectorId } = req.params;
-            const deliveries = await deliveryService.getRecentDeliveriesForCurrentMonth(collectorId);
+            const deliveries = await deliveryService.getRecentDeliveriesForCurrentMonthByCollectedBy(collectorId);
+            res.json(deliveries);
+        } catch (error) {
+            res.status(500).json({ message: 'Error getting recent deliveries', error: error.message });
+        }
+    },
+    getRecentDeliveriesForCurrentMonthBySuppliedBy: async (req,res) => {
+        try {
+            const { supplierId } = req.params;
+            const deliveries = await deliveryService.getRecentDeliveriesForCurrentMonthBySuppliedBy(supplierId);
             res.json(deliveries);
         } catch (error) {
             res.status(500).json({ message: 'Error getting recent deliveries', error: error.message });

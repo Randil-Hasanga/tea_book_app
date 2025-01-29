@@ -18,7 +18,10 @@ class _CollectorDashboardState extends State<CollectorDashboard> {
   final dio = Dio();
   UserServices? _userServices;
 
-  Response<dynamic>? userDetailsResponse, deliveriesResponse, suppliersResponse;
+  Response<dynamic>? userDetailsResponse,
+      deliveriesResponse,
+      suppliersResponse,
+      collecotrDeliveriesResponse;
   String? collectorName = 'Collector', collector_id;
   bool isLoading = true;
 
@@ -46,10 +49,20 @@ class _CollectorDashboardState extends State<CollectorDashboard> {
           '${_userServices!.base_url}/supplier/createdBy/$collector_id';
       final suppliers = await dio.get(suppliersUrl);
 
+      final now = DateTime.now();
+      final int currentMonth = now.month;
+      final int currentYear = now.year;
+
+      final collecotrDeliveriesURL =
+          '${_userServices!.base_url}/delivery?collectorId=$collector_id&month=$currentMonth&year=$currentYear';
+      final collectorDeliveries = await dio.get(collecotrDeliveriesURL);
+
       setState(() {
         userDetailsResponse = result;
         deliveriesResponse = deliveries;
         suppliersResponse = suppliers;
+        collecotrDeliveriesResponse = collectorDeliveries;
+
         collectorName = userDetailsResponse?.data['data']?[0]
                 ['collector_name'] ??
             'Collector';
@@ -173,7 +186,8 @@ class _CollectorDashboardState extends State<CollectorDashboard> {
                                     mainAxisAlignment: MainAxisAlignment.center,
                                     children: [
                                       Text(
-                                        deliveriesResponse?.data?.length
+                                        collecotrDeliveriesResponse
+                                                ?.data?.length
                                                 .toString() ??
                                             '0',
                                         style: const TextStyle(
@@ -235,7 +249,9 @@ class _CollectorDashboardState extends State<CollectorDashboard> {
                           children: [
                             InkWell(
                               onTap: () {
-                                Navigator.pushNamed(context, '/suppliers');
+                                Navigator.pushNamed(
+                                    context, '/collector-suppliers',
+                                    arguments: _initializeDashboard);
                               },
                               child: const RoundedCard(
                                 title: 'Suppliers',
@@ -248,7 +264,8 @@ class _CollectorDashboardState extends State<CollectorDashboard> {
                             ),
                             InkWell(
                               onTap: () {
-                                
+                                Navigator.pushNamed(
+                                    context, '/collector-deliveries');
                               },
                               child: const RoundedCard(
                                 title: 'Deliveries',
@@ -261,7 +278,8 @@ class _CollectorDashboardState extends State<CollectorDashboard> {
                             ),
                             InkWell(
                               onTap: () {
-                                print("RoundedCard tapped!");
+                                Navigator.pushNamed(context, '/collect-tea',
+                                    arguments: _initializeDashboard);
                                 // Add your button action here
                               }, // Ripple effect color
                               child: const RoundedCard(
@@ -270,8 +288,7 @@ class _CollectorDashboardState extends State<CollectorDashboard> {
                                 backgroundColor: Colors.white,
                                 iconBackgroundColor:
                                     Color.fromARGB(255, 227, 255, 227),
-                                iconColor:
-                                    Color.fromARGB(255, 35, 209, 93),
+                                iconColor: Color.fromARGB(255, 35, 209, 93),
                               ),
                             ),
                           ],

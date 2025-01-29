@@ -34,11 +34,11 @@ class _SupplierPageState extends State<SupplierPage> {
   void initState() {
     super.initState();
     _userServices = GetIt.instance.get<UserServices>();
-    _initializeDashboard();
+    _initializeData();
     _searchController.addListener(_filterSuppliers);
   }
 
-  Future<void> _initializeDashboard() async {
+  Future<void> _initializeData() async {
     try {
       setState(() {
         _collectorId = _userServices!.collector_id;
@@ -318,7 +318,12 @@ class _SupplierPageState extends State<SupplierPage> {
       );
       print('Response: ${response.data}');
 
-      await _initializeDashboard();
+      await _initializeData();
+
+      final callback = ModalRoute.of(context)!.settings.arguments as Function?;
+      if (callback != null) {
+        callback(); // Refresh the dashboard
+      }
       setState(() {
         _isLoading = false;
       });
