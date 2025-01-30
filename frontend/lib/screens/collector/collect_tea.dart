@@ -24,7 +24,11 @@ class _CollectTeaState extends State<CollectTea> {
   final dio = Dio();
   UserServices? _userServices;
   String? collectorId;
-  bool _isSubmitting = false; // Flag to control the loading screen during submission
+  bool _isSubmitting =
+      false; // Flag to control the loading screen during submission
+
+  double? _screenWidth, _screenHeight;
+  TextScaler? _textScaleFactor;
 
   @override
   void initState() {
@@ -86,7 +90,8 @@ class _CollectTeaState extends State<CollectTea> {
 
     print('Request body: $requestBody');
     try {
-      final response = await dio.post('${_userServices!.base_url}/delivery', data: requestBody);
+      final response = await dio.post('${_userServices!.base_url}/delivery',
+          data: requestBody);
 
       // Debugging the response
       print('Response: ${response.data}');
@@ -100,7 +105,8 @@ class _CollectTeaState extends State<CollectTea> {
           ),
         );
         clearForm(); // Ensure this gets called when submission is successful
-        final callback = ModalRoute.of(context)!.settings.arguments as Function?;
+        final callback =
+            ModalRoute.of(context)!.settings.arguments as Function?;
         if (callback != null) {
           callback(); // Refresh the dashboard
         }
@@ -129,12 +135,16 @@ class _CollectTeaState extends State<CollectTea> {
 
   @override
   Widget build(BuildContext context) {
+    _screenWidth = MediaQuery.of(context).size.width;
+    _screenHeight = MediaQuery.of(context).size.height;
+    _textScaleFactor = MediaQuery.textScalerOf(context);
     return Scaffold(
       backgroundColor: Colors.white, // Light background
       appBar: AppBar(
-        title: const Text(
+        title: Text(
           "Collect Tea",
-          style: TextStyle(color: Color(0xFF13AA52)),
+          style: TextStyle(
+              color: Color(0xFF13AA52), fontSize: _textScaleFactor!.scale(20)),
         ),
         backgroundColor: Colors.white,
         elevation: 0,
@@ -144,35 +154,46 @@ class _CollectTeaState extends State<CollectTea> {
           ? const Center(child: CircularProgressIndicator(color: Colors.green))
           : Stack(
               children: [
-                Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 16),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Center(
-                        child: Container(
-                          height: 100,
-                          child: const Icon(
-                            Icons.eco,
-                            size: 100,
-                            color: Color(0xFF13AA52),
+                SafeArea(
+                  child: SingleChildScrollView(
+                    keyboardDismissBehavior:
+                        ScrollViewKeyboardDismissBehavior.onDrag,
+                    child: Padding(
+                      padding: EdgeInsets.symmetric(
+                          horizontal: _screenWidth! * 0.05),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          SizedBox(
+                              height: _screenHeight! *
+                                  0.1), // Prevents top overlap
+                          Center(
+                            child: Container(
+                              height: 100,
+                              child: Icon(
+                                Icons.eco,
+                                size: _screenWidth! * 0.3,
+                                color: Color(0xFF13AA52),
+                              ),
+                            ),
                           ),
-                        ),
+                          SizedBox(height: _screenHeight! * 0.02),
+                          _buildSupplierAutocomplete(),
+                          SizedBox(height: _screenHeight! * 0.02),
+                          _buildTextField(
+                              _totalWeightController, "Total Weight (kg)"),
+                          SizedBox(height: _screenHeight! * 0.02),
+                          _buildTextField(
+                              _bagWeightController, "Bag Weight (grams)"),
+                          SizedBox(height: _screenHeight! * 0.02),
+                          _buildNetWeightDisplay(),
+                          SizedBox(height: _screenHeight! * 0.02),
+                          _buildActionButtons(),
+                        ],
                       ),
-                      _buildSupplierAutocomplete(),
-                      const SizedBox(height: 16),
-                      _buildTextField(_totalWeightController, "Total Weight (kg)"),
-                      const SizedBox(height: 16),
-                      _buildTextField(_bagWeightController, "Bag Weight (grams)"),
-                      const SizedBox(height: 16),
-                      _buildNetWeightDisplay(),
-                      const SizedBox(height: 16),
-                      _buildActionButtons(),
-                    ],
+                    ),
                   ),
                 ),
-                // Blurred background and loading screen overlay
                 if (_isSubmitting)
                   Positioned.fill(
                     child: BackdropFilter(
@@ -214,8 +235,7 @@ class _CollectTeaState extends State<CollectTea> {
           selectedSupplierId = selectedSupplier["_id"];
         });
       },
-      fieldViewBuilder:
-          (context, controller, focusNode, onEditingComplete) {
+      fieldViewBuilder: (context, controller, focusNode, onEditingComplete) {
         return TextField(
           controller: controller,
           focusNode: focusNode,
@@ -274,8 +294,8 @@ class _CollectTeaState extends State<CollectTea> {
     return Center(
       child: Text(
         "Net Weight: $netWeight kg",
-        style: const TextStyle(
-          fontSize: 20,
+        style: TextStyle(
+          fontSize: _textScaleFactor!.scale(20),
           fontWeight: FontWeight.bold,
           color: Color(0xFF13AA52),
         ),
@@ -296,9 +316,11 @@ class _CollectTeaState extends State<CollectTea> {
             ),
             padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 24),
           ),
-          child: const Text("Submit", style: TextStyle(color: Colors.white, fontSize: 16)),
+          child: Text("Submit",
+              style: TextStyle(
+                  color: Colors.white, fontSize: _textScaleFactor!.scale(16))),
         ),
-        const SizedBox(width: 16),
+        SizedBox(width: _screenWidth! * 0.02),
         ElevatedButton(
           onPressed: clearForm,
           style: ElevatedButton.styleFrom(
@@ -308,7 +330,8 @@ class _CollectTeaState extends State<CollectTea> {
             ),
             padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 24),
           ),
-          child: const Text("Clear", style: TextStyle(color: Colors.white, fontSize: 16)),
+          child: Text("Clear",
+              style: TextStyle(color: Colors.white, fontSize: _textScaleFactor!.scale(16))),
         ),
       ],
     );

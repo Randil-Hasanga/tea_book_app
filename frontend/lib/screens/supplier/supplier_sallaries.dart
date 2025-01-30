@@ -20,6 +20,8 @@ class _SupplierSalariesPageState extends State<SupplierSalariesPage> {
   List<Map<String, dynamic>> filteredSalaries = [];
   final TextEditingController _searchController = TextEditingController();
   bool _isLoading = true;
+  double? _screenWidth, _screenHeight;
+  TextScaler? _textScaleFactor;
 
   @override
   void initState() {
@@ -143,27 +145,27 @@ class _SupplierSalariesPageState extends State<SupplierSalariesPage> {
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
                       Text.rich(
-                      TextSpan(
-                        text: '$month ', // Month in regular text
-                        style: const TextStyle(
-                          fontWeight: FontWeight.bold,
-                          fontSize: 16
-                        ),
-                        children: [
-                          TextSpan(
-                            text: year, // Year in normal style
-                            style: const TextStyle(
-                              fontWeight: FontWeight.normal,
-                            ),
+                        TextSpan(
+                          text: '$month ', // Month in regular text
+                          style: TextStyle(
+                            fontWeight: FontWeight.bold,
+                            fontSize: _textScaleFactor!.scale(16),
                           ),
-                        ],
+                          children: [
+                            TextSpan(
+                              text: year, // Year in normal style
+                              style: const TextStyle(
+                                fontWeight: FontWeight.normal,
+                              ),
+                            ),
+                          ],
+                        ),
                       ),
-                    ),
                       Text(
                         'Rs.${salary['salary'].toStringAsFixed(2)}',
-                        style: const TextStyle(
+                        style: TextStyle(
                           fontWeight: FontWeight.bold,
-                          fontSize: 18,
+                          fontSize: _textScaleFactor!.scale(18),
                         ),
                       ),
                     ],
@@ -193,6 +195,9 @@ class _SupplierSalariesPageState extends State<SupplierSalariesPage> {
 
   @override
   Widget build(BuildContext context) {
+    _screenWidth = MediaQuery.of(context).size.width;
+    _screenHeight = MediaQuery.of(context).size.height;
+    _textScaleFactor = MediaQuery.textScalerOf(context);
     return Scaffold(
       backgroundColor: const Color.fromARGB(255, 241, 255, 242),
       appBar: AppBar(
@@ -200,10 +205,10 @@ class _SupplierSalariesPageState extends State<SupplierSalariesPage> {
       ),
       body: Stack(
         children: [
-          const Center(
+          Center(
             child: Icon(
               Icons.eco_rounded,
-              size: 300,
+              size: _screenWidth! * 0.5,
               color: Color(0xFF13AA52),
             ),
           ),
@@ -225,10 +230,10 @@ class _SupplierSalariesPageState extends State<SupplierSalariesPage> {
                   ],
                 )
               : Padding(
-                  padding: const EdgeInsets.all(20.0),
-                  child: Expanded(
-                    child: _buildSupplierList(),
-                  ),
+                  padding: EdgeInsets.symmetric(
+                      horizontal: _screenWidth! * 0.05,
+                      vertical: _screenHeight! * 0.01),
+                  child: _buildSupplierList(),
                 ),
         ],
       ),

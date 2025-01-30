@@ -22,6 +22,10 @@ class _SupplierDashboardState extends State<SupplierDashboard> {
       salaryResponse;
   String? supplierName = 'Collector', supplier_id;
   bool isLoading = true;
+  bool? isActive;
+
+  double? _screenWidth, _screenHeight;
+  TextScaler? _textScaleFactor;
 
   @override
   void initState() {
@@ -32,13 +36,21 @@ class _SupplierDashboardState extends State<SupplierDashboard> {
 
   Future<void> _initializeDashboard() async {
     try {
+      setState(() {
+        if (isActive == null) {
+          isLoading = true;
+        }
+      });
       final userDetailsURL =
           '${_userServices!.base_url}/supplier?user_id=${_userServices!.user_id}';
       final result = await dio.get(userDetailsURL);
 
       print('User details: ${result.data}');
 
-      supplier_id = result.data['data'][0]['_id'];
+      setState(() {
+        supplier_id = result.data['data'][0]['_id'];
+        isActive = result.data['data'][0]['isActive'];
+      });
       _userServices!.supplier_id = supplier_id;
 
       final deliveriesURL =
@@ -81,12 +93,45 @@ class _SupplierDashboardState extends State<SupplierDashboard> {
 
   @override
   Widget build(BuildContext context) {
+    _screenWidth = MediaQuery.of(context).size.width;
+    _screenHeight = MediaQuery.of(context).size.height;
+    _textScaleFactor = MediaQuery.textScalerOf(context);
+
     return Scaffold(
       body: Stack(
         children: [
-          _buildBackground(),
-          _buildMainContent(),
-          if (isLoading) _buildLoadingOverlay(),
+          if (isActive != null) ...{
+            if (isActive!) ...{
+              _buildBackground(),
+              _buildMainContent(),
+              if (isLoading) _buildLoadingOverlay(),
+            } else ...{
+              Center(
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Text(
+                      'Your account is currently inactive.',
+                      style: TextStyle(
+                          fontSize: _textScaleFactor!.scale(20),
+                          fontWeight: FontWeight.bold),
+                    ),
+                    SizedBox(height: 20),
+                    ElevatedButton(
+                      onPressed: () {
+                        Navigator.popAndPushNamed(context, '/login');
+                      },
+                      child: Text('Back to Login'),
+                    ),
+                  ],
+                ),
+              ),
+            }
+          } else ...{
+            _buildBackground(),
+            _buildMainContent(),
+            if (isLoading) _buildLoadingOverlay(),
+          }
         ],
       ),
     );
@@ -107,7 +152,7 @@ class _SupplierDashboardState extends State<SupplierDashboard> {
         Align(
           alignment: Alignment.bottomCenter,
           child: Container(
-            height: MediaQuery.of(context).size.height * 0.85,
+            height: MediaQuery.of(context).size.height * 0.87,
             decoration: const BoxDecoration(
               color: Color.fromARGB(255, 241, 255, 242),
               borderRadius: BorderRadius.only(
@@ -131,7 +176,7 @@ class _SupplierDashboardState extends State<SupplierDashboard> {
   Widget _buildMainContent() {
     return SafeArea(
       child: Padding(
-        padding: const EdgeInsets.all(8.0),
+        padding: EdgeInsets.symmetric(horizontal: _screenWidth! * 0.008),
         child: Column(
           mainAxisAlignment: MainAxisAlignment.start,
           crossAxisAlignment: CrossAxisAlignment.center,
@@ -139,16 +184,16 @@ class _SupplierDashboardState extends State<SupplierDashboard> {
             _buildAppBar(),
             Expanded(
               child: Padding(
-                padding: const EdgeInsets.all(8.0),
+                padding: EdgeInsets.symmetric(horizontal: _screenWidth! * 0.02),
                 child: Column(
                   mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                   crossAxisAlignment: CrossAxisAlignment.center,
                   children: [
                     Container(
-                      height: 100,
-                      child: const Icon(
+                      height: _screenHeight! * 0.12,
+                      child: Icon(
                         Icons.eco,
-                        size: 100,
+                        size: _screenWidth! * 0.3,
                         color: Color(0xFF13AA52),
                       ),
                     ),
@@ -166,8 +211,8 @@ class _SupplierDashboardState extends State<SupplierDashboard> {
                                                 .toString() ??
                                             '0') ??
                                         0)
-                                    .toStringAsFixed(1),
-                                width: 172.5),
+                                    .toStringAsFixed(2),
+                                width: _screenWidth! * 0.46),
                             if (salaryResponse != null &&
                                 salaryResponse!.data != null &&
                                 salaryResponse!.data['data']['salary'] !=
@@ -179,20 +224,20 @@ class _SupplierDashboardState extends State<SupplierDashboard> {
                                                   .toString() ??
                                               '0') ??
                                           0)
-                                      .toStringAsFixed(1),
+                                      .toStringAsFixed(2),
 
                                   // Update this when you have suppliers data
-                                  width: 172),
+                                  width: _screenWidth! * 0.46),
                             } else ...{
                               _buildDashboardCard(
                                   title: "Salary (Rs.)",
                                   value:
                                       '0', // Update this when you have suppliers data
-                                  width: 172.5),
+                                  width: _screenWidth! * 0.46),
                             },
                           ],
                         ),
-                        const SizedBox(height: 15),
+                        SizedBox(height: _screenWidth! * 0.02),
                         Row(
                           mainAxisAlignment: MainAxisAlignment.spaceBetween,
                           children: [
@@ -205,10 +250,11 @@ class _SupplierDashboardState extends State<SupplierDashboard> {
                                 value: suppliersDeliveriesResponse?.data?.length
                                         .toString() ??
                                     '0',
-                                width: 110),
+                                width: _screenWidth! * 0.28,
+                                height: _screenWidth! * 0.28),
                           ],
                         ),
-                        const SizedBox(height: 20),
+                        SizedBox(height: _screenHeight! * 0.02),
                         if (deliveriesResponse != null)
                           Padding(
                             padding: const EdgeInsets.all(8.0),
@@ -256,8 +302,9 @@ class _SupplierDashboardState extends State<SupplierDashboard> {
             children: [
               Text(
                 value,
-                style: const TextStyle(
-                    fontSize: 40, color: Color.fromARGB(255, 35, 209, 93)),
+                style: TextStyle(
+                    fontSize: _textScaleFactor!.scale(35),
+                    color: Color.fromARGB(255, 35, 209, 93)),
               ),
             ],
           ),
@@ -278,6 +325,8 @@ class _SupplierDashboardState extends State<SupplierDashboard> {
         backgroundColor: Colors.white,
         iconBackgroundColor: const Color.fromARGB(255, 227, 255, 227),
         iconColor: const Color.fromARGB(255, 35, 209, 93),
+        height: _screenWidth! * 0.28,
+        width: _screenWidth! * 0.3,
       ),
     );
   }
@@ -286,60 +335,68 @@ class _SupplierDashboardState extends State<SupplierDashboard> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const Text(
+        Text(
           'Recent Deliveries',
-          style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+          style: TextStyle(
+              fontSize: _textScaleFactor!.scale(20),
+              fontWeight: FontWeight.bold),
         ),
-        ListView.builder(
-          shrinkWrap: true,
-          scrollDirection: Axis.vertical,
-          itemCount: deliveriesResponse?.data?.length ?? 0,
-          itemBuilder: (context, index) {
-            final delivery = deliveriesResponse?.data[index];
-            final collectorName =
-                delivery['collected_by']?['collector_name'] ?? 'Unknown';
-            final mobile =
-                delivery['collected_by']?['collector_phone']?.toString() ??
-                    'N/A';
-            final netWeight = delivery['net_weight']?.toString() ?? 'N/A';
+        Container(
+          height: _screenHeight! * 0.3,
+          child: ListView.builder(
+            shrinkWrap: true,
+            scrollDirection: Axis.vertical,
+            itemCount: deliveriesResponse?.data?.length ?? 0,
+            itemBuilder: (context, index) {
+              final delivery = deliveriesResponse?.data[index];
+              final collectorName =
+                  delivery['collected_by']?['collector_name'] ?? 'Unknown';
+              final mobile =
+                  delivery['collected_by']?['collector_phone']?.toString() ??
+                      'N/A';
+              final netWeight = delivery['net_weight']?.toString() ?? 'N/A';
 
-            return Container(
-              margin: const EdgeInsets.symmetric(vertical: 4.0),
-              decoration: BoxDecoration(
-                color: Colors.white,
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.black.withOpacity(0.08),
-                    blurRadius: 10,
-                    offset: const Offset(4, 4),
+              return Container(
+                height: _screenHeight! * 0.09,
+                margin: EdgeInsets.symmetric(vertical: _screenHeight! * 0.005),
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withOpacity(0.08),
+                      blurRadius: 10,
+                      offset: const Offset(4, 4),
+                    ),
+                  ],
+                  borderRadius: BorderRadius.circular(20),
+                ),
+                child: ListTile(
+                  contentPadding: EdgeInsets.symmetric(
+                      horizontal: 16.0, vertical: _screenHeight! * 0.0005),
+                  title: Text(
+                    collectorName,
+                    style: TextStyle(
+                        fontSize: _textScaleFactor!.scale(18),
+                        fontWeight: FontWeight.bold,
+                        color: Colors.green[800]),
                   ),
-                ],
-                borderRadius: BorderRadius.circular(20),
-              ),
-              child: ListTile(
-                contentPadding:
-                    const EdgeInsets.symmetric(horizontal: 16.0, vertical: 2.0),
-                title: Text(
-                  collectorName,
-                  style: TextStyle(
-                      fontSize: 18.0,
-                      fontWeight: FontWeight.bold,
-                      color: Colors.green[800]),
+                  subtitle: Text(
+                    'Mobile: $mobile',
+                    style: TextStyle(
+                        fontSize: _textScaleFactor!.scale(14),
+                        color: Colors.grey[700]),
+                  ),
+                  trailing: Text(
+                    'Net Weight: $netWeight Kg',
+                    style: TextStyle(
+                        fontSize: _textScaleFactor!.scale(14),
+                        fontWeight: FontWeight.bold,
+                        color: Colors.blue[600]),
+                  ),
                 ),
-                subtitle: Text(
-                  'Mobile: $mobile',
-                  style: TextStyle(fontSize: 14.0, color: Colors.grey[700]),
-                ),
-                trailing: Text(
-                  'Net Weight: $netWeight Kg',
-                  style: TextStyle(
-                      fontSize: 14.0,
-                      fontWeight: FontWeight.bold,
-                      color: Colors.blue[600]),
-                ),
-              ),
-            );
-          },
+              );
+            },
+          ),
         ),
       ],
     );
@@ -350,11 +407,11 @@ class _SupplierDashboardState extends State<SupplierDashboard> {
       automaticallyImplyLeading: false,
       backgroundColor: Colors.transparent,
       elevation: 0,
-      title: Center(
-        child: Text(
-          'Hi $supplierName!',
-          style: const TextStyle(color: Colors.white),
-        ),
+      leading: IconButton(
+        icon: const Icon(Icons.logout, color: Colors.white),
+        onPressed: () {
+          Navigator.popAndPushNamed(context, '/login');
+        },
       ),
     );
   }

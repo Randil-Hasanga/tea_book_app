@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:frontend/services/user_services.dart';
 import 'package:dio/dio.dart';
 import 'package:get_it/get_it.dart';
+import 'package:intl/intl.dart';
 
 class SupplierPage extends StatefulWidget {
   const SupplierPage({super.key});
@@ -29,6 +30,8 @@ class _SupplierPageState extends State<SupplierPage> {
 
   final GlobalKey<FormState> _formKey =
       GlobalKey<FormState>(); // FormKey for validation
+  TextScaler? _textScaleFactor;
+  double? _screenWidth, _screenHeight;
 
   @override
   void initState() {
@@ -93,50 +96,99 @@ class _SupplierPageState extends State<SupplierPage> {
       itemCount: filteredSuppliers.length,
       itemBuilder: (context, index) {
         final supplier = filteredSuppliers[index];
+        final formattedDate = DateFormat('yyyy-MM-dd HH:mm')
+            .format(DateTime.parse(supplier['createdAt']));
+
         return Card(
           elevation: 4,
           margin: const EdgeInsets.symmetric(vertical: 8.0),
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(16.0),
           ),
-          child: ClipRRect(
-            borderRadius: BorderRadius.circular(12.0),
-            child: BackdropFilter(
-              filter: ImageFilter.blur(sigmaX: 50, sigmaY: 50),
-              child: Container(
-                decoration: BoxDecoration(
-                  color:
-                      Colors.white.withOpacity(0.1), // Semi-transparent white
-                  borderRadius: BorderRadius.circular(16.0),
-                ),
-                child: ListTile(
-                  contentPadding: const EdgeInsets.all(8.0),
-                  title: Text(
-                    supplier['supplier_name'],
-                    style: const TextStyle(
-                      fontWeight: FontWeight.bold,
-                      fontSize: 18,
+          child: Column(
+            children: [
+              if (supplier['isActive'] == false) ...{
+                ClipRRect(
+                  borderRadius: BorderRadius.circular(12.0),
+                  child: BackdropFilter(
+                    filter: ImageFilter.blur(sigmaX: 50, sigmaY: 50),
+                    child: Container(
+                      decoration: BoxDecoration(
+                        color: Colors.red
+                            .withOpacity(0.4), // Semi-transparent white
+                        borderRadius: BorderRadius.circular(16.0),
+                      ),
+                      child: ListTile(
+                        contentPadding: const EdgeInsets.all(8.0),
+                        title: Text(
+                          supplier['supplier_name'],
+                          style: const TextStyle(
+                            fontWeight: FontWeight.bold,
+                            fontSize: 18,
+                          ),
+                        ),
+                        subtitle: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            const SizedBox(height: 4),
+                            Text('Phone: ${supplier['supplier_phone']}'),
+                            Text('NIC: ${supplier['supplier_NIC']}'),
+                            Text('Date of Join: ${formattedDate}'),
+                          ],
+                        ),
+                        leading: const CircleAvatar(
+                          backgroundColor: Color.fromARGB(255, 227, 255, 227),
+                          child: Icon(
+                            Icons.person,
+                            color: Colors.green,
+                          ),
+                        ),
+                      ),
                     ),
                   ),
-                  subtitle: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      const SizedBox(height: 4),
-                      Text('Email: ${supplier['supplier_email']}'),
-                      Text('Phone: ${supplier['supplier_phone']}'),
-                      Text('NIC: ${supplier['supplier_NIC']}'),
-                    ],
-                  ),
-                  leading: const CircleAvatar(
-                    backgroundColor: Color.fromARGB(255, 227, 255, 227),
-                    child: Icon(
-                      Icons.person,
-                      color: Colors.green,
+                ),
+              } else ...{
+                ClipRRect(
+                  borderRadius: BorderRadius.circular(12.0),
+                  child: BackdropFilter(
+                    filter: ImageFilter.blur(sigmaX: 50, sigmaY: 50),
+                    child: Container(
+                      decoration: BoxDecoration(
+                        color: Colors.white
+                            .withOpacity(0.1), // Semi-transparent white
+                        borderRadius: BorderRadius.circular(16.0),
+                      ),
+                      child: ListTile(
+                        contentPadding: const EdgeInsets.all(8.0),
+                        title: Text(
+                          supplier['supplier_name'],
+                          style: const TextStyle(
+                            fontWeight: FontWeight.bold,
+                            fontSize: 18,
+                          ),
+                        ),
+                        subtitle: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            const SizedBox(height: 4),
+                            Text('Phone: ${supplier['supplier_phone']}'),
+                            Text('NIC: ${supplier['supplier_NIC']}'),
+                            Text('Date of Join: ${formattedDate}'),
+                          ],
+                        ),
+                        leading: const CircleAvatar(
+                          backgroundColor: Color.fromARGB(255, 227, 255, 227),
+                          child: Icon(
+                            Icons.person,
+                            color: Colors.green,
+                          ),
+                        ),
+                      ),
                     ),
                   ),
                 ),
-              ),
-            ),
+              },
+            ],
           ),
         );
       },
@@ -187,15 +239,11 @@ class _SupplierPageState extends State<SupplierPage> {
                   TextFormField(
                     controller: _emailController,
                     decoration: const InputDecoration(
-                      labelText: 'Supplier Email',
+                      labelText: 'Supplier Username',
                     ),
-                    keyboardType: TextInputType.emailAddress,
                     validator: (value) {
                       if (value == null || value.isEmpty) {
-                        return 'Please enter supplier email';
-                      }
-                      if (!RegExp(r'^[^@]+@[^@]+\.[^@]+').hasMatch(value)) {
-                        return 'Please enter a valid email';
+                        return 'Please enter supplier username';
                       }
                       return null;
                     },
@@ -204,12 +252,12 @@ class _SupplierPageState extends State<SupplierPage> {
                   TextFormField(
                     controller: _passwordController,
                     decoration: const InputDecoration(
-                      labelText: 'Supplier Password',
+                      labelText: 'Supplier Tea Book Id',
                     ),
                     obscureText: true,
                     validator: (value) {
                       if (value == null || value.isEmpty) {
-                        return 'Please enter supplier password';
+                        return 'Please enter supplier tea book id';
                       }
                       return null;
                     },
@@ -317,7 +365,12 @@ class _SupplierPageState extends State<SupplierPage> {
         },
       );
       print('Response: ${response.data}');
-
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Supplier Added Successfully'),
+          backgroundColor: Color(0xFF13AA52),
+        ),
+      );
       await _initializeData();
 
       final callback = ModalRoute.of(context)!.settings.arguments as Function?;
@@ -329,6 +382,15 @@ class _SupplierPageState extends State<SupplierPage> {
       });
     } catch (e) {
       print('Error adding supplier: $e');
+      setState(() {
+        _isLoading = false;
+      });
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Error adding supplier'),
+          backgroundColor: Colors.redAccent,
+        ),
+      );
     } finally {}
   }
 
@@ -345,18 +407,26 @@ class _SupplierPageState extends State<SupplierPage> {
 
   @override
   Widget build(BuildContext context) {
+    _textScaleFactor = MediaQuery.textScalerOf(context);
+    _screenWidth = MediaQuery.of(context).size.width;
+    _screenHeight = MediaQuery.of(context).size.height;
     return Scaffold(
       backgroundColor: const Color.fromARGB(255, 241, 255, 242),
       appBar: AppBar(
-        title: const Text('Suppliers'),
+        title: Text(
+          'Suppliers',
+          style: TextStyle(
+            fontSize: _textScaleFactor!.scale(20),
+          ),
+        ),
       ),
       body: Stack(
         children: [
           // Large leaf icon background
-          const Center(
+          Center(
             child: Icon(
               Icons.eco_rounded,
-              size: 300,
+              size: _screenWidth! * 0.5,
               color: Color(0xFF13AA52),
             ),
           ),

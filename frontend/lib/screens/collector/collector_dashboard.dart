@@ -22,6 +22,9 @@ class _CollectorDashboardState extends State<CollectorDashboard> {
       collecotrDeliveriesResponse;
   String? collectorName = 'Collector', collector_id, role;
   bool isLoading = true;
+  double? _screenWidth, _screenHeight;
+  TextScaler? _textScaleFactor;
+  bool? isActive;
 
   @override
   void initState() {
@@ -32,13 +35,21 @@ class _CollectorDashboardState extends State<CollectorDashboard> {
 
   Future<void> _initializeDashboard() async {
     try {
+      setState(() {
+        if (isActive == null) {
+          isLoading = true;
+        }
+      });
       final userDetailsURL =
           '${_userServices!.base_url}/collector?user_id=${_userServices!.user_id}';
       final result = await dio.get(userDetailsURL);
 
-      collector_id = result.data['data'][0]['_id'];
+      setState(() {
+        collector_id = result.data['data'][0]['_id'];
+        isActive = result.data['data'][0]['isActive'];
+      });
+
       role = _userServices!.role;
-      print('user role :::::::::::: ${role}');
       _userServices!.collector_id = collector_id;
 
       final deliveriesURL =
@@ -79,12 +90,44 @@ class _CollectorDashboardState extends State<CollectorDashboard> {
 
   @override
   Widget build(BuildContext context) {
+    _screenWidth = MediaQuery.of(context).size.width;
+    _screenHeight = MediaQuery.of(context).size.height;
+    _textScaleFactor = MediaQuery.textScalerOf(context);
     return Scaffold(
       body: Stack(
         children: [
-          _buildBackground(),
-          _buildMainContent(),
-          if (isLoading) _buildLoadingOverlay(),
+          if (isActive != null) ...{
+            if (isActive!) ...{
+              _buildBackground(),
+              _buildMainContent(),
+              if (isLoading) _buildLoadingOverlay(),
+            } else ...{
+              Center(
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Text(
+                      'Your account is currently inactive.',
+                      style: TextStyle(
+                          fontSize: _textScaleFactor!.scale(20),
+                          fontWeight: FontWeight.bold),
+                    ),
+                    SizedBox(height: 20),
+                    ElevatedButton(
+                      onPressed: () {
+                        Navigator.popAndPushNamed(context, '/login');
+                      },
+                      child: Text('Back to Login'),
+                    ),
+                  ],
+                ),
+              ),
+            },
+          } else ...{
+            _buildBackground(),
+            _buildMainContent(),
+            if (isLoading) _buildLoadingOverlay()
+          }
         ],
       ),
     );
@@ -108,7 +151,7 @@ class _CollectorDashboardState extends State<CollectorDashboard> {
         Align(
           alignment: Alignment.bottomCenter,
           child: Container(
-            height: MediaQuery.of(context).size.height * 0.85,
+            height: MediaQuery.of(context).size.height * 0.87,
             decoration: const BoxDecoration(
               color: Color.fromARGB(255, 241, 255, 242),
               borderRadius: BorderRadius.only(
@@ -133,7 +176,7 @@ class _CollectorDashboardState extends State<CollectorDashboard> {
   Widget _buildMainContent() {
     return SafeArea(
       child: Padding(
-        padding: const EdgeInsets.all(8.0),
+        padding: EdgeInsets.symmetric(horizontal: _screenWidth! * 0.02),
         child: Column(
           mainAxisAlignment: MainAxisAlignment.start,
           crossAxisAlignment: CrossAxisAlignment.center,
@@ -141,16 +184,17 @@ class _CollectorDashboardState extends State<CollectorDashboard> {
             _buildAppBar(),
             Expanded(
               child: Padding(
-                padding: const EdgeInsets.all(8.0),
+                padding:
+                    EdgeInsets.symmetric(horizontal: _screenWidth! * 0.008),
                 child: Column(
                   mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                   crossAxisAlignment: CrossAxisAlignment.center,
                   children: [
                     Container(
-                      height: 100,
-                      child: const Icon(
+                      height: _screenHeight! * 0.2,
+                      child: Icon(
                         Icons.eco,
-                        size: 100,
+                        size: _screenWidth! * 0.3,
                         color: Color(0xFF13AA52),
                       ),
                     ),
@@ -163,8 +207,8 @@ class _CollectorDashboardState extends State<CollectorDashboard> {
                           children: [
                             Container(
                               padding: const EdgeInsets.all(10),
-                              height: 120,
-                              width: 235,
+                              height: _screenHeight! * 0.19,
+                              width: _screenWidth! * 0.62,
                               decoration: BoxDecoration(
                                 color: Colors.white,
                                 boxShadow: [
@@ -190,8 +234,9 @@ class _CollectorDashboardState extends State<CollectorDashboard> {
                                                 ?.data?.length
                                                 .toString() ??
                                             '0',
-                                        style: const TextStyle(
-                                            fontSize: 50,
+                                        style: TextStyle(
+                                            fontSize:
+                                                _textScaleFactor!.scale(50),
                                             color: Color.fromARGB(
                                                 255, 35, 209, 93)),
                                       ),
@@ -202,8 +247,8 @@ class _CollectorDashboardState extends State<CollectorDashboard> {
                             ),
                             Container(
                               padding: const EdgeInsets.all(10),
-                              height: 120,
-                              width: 110,
+                              height: _screenHeight! * 0.19,
+                              width: _screenWidth! * 0.30,
                               decoration: BoxDecoration(
                                 color: Colors.white,
                                 boxShadow: [
@@ -228,8 +273,8 @@ class _CollectorDashboardState extends State<CollectorDashboard> {
                                         suppliersResponse?.data['data']['count']
                                                 ?.toString() ??
                                             '0', // Safely accessing the count
-                                        style: const TextStyle(
-                                          fontSize: 50,
+                                        style: TextStyle(
+                                          fontSize: _textScaleFactor!.scale(50),
                                           color:
                                               Color.fromARGB(255, 35, 209, 93),
                                         ),
@@ -241,8 +286,8 @@ class _CollectorDashboardState extends State<CollectorDashboard> {
                             ),
                           ],
                         ),
-                        const SizedBox(
-                          height: 15,
+                        SizedBox(
+                          height: _screenWidth! * 0.02,
                         ),
                         Row(
                           mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -253,13 +298,14 @@ class _CollectorDashboardState extends State<CollectorDashboard> {
                                     context, '/collector-suppliers',
                                     arguments: _initializeDashboard);
                               },
-                              child: const RoundedCard(
+                              child: RoundedCard(
                                 title: 'Suppliers',
                                 icon: Icons.people,
                                 backgroundColor: Colors.white,
                                 iconBackgroundColor:
                                     Color.fromARGB(255, 227, 255, 227),
                                 iconColor: Color.fromARGB(255, 35, 209, 93),
+                                width: _screenWidth! * 0.3,
                               ),
                             ),
                             InkWell(
@@ -267,14 +313,14 @@ class _CollectorDashboardState extends State<CollectorDashboard> {
                                 Navigator.pushNamed(
                                     context, '/collector-deliveries');
                               },
-                              child: const RoundedCard(
-                                title: 'Deliveries',
-                                icon: Icons.archive,
-                                backgroundColor: Colors.white,
-                                iconBackgroundColor:
-                                    Color.fromARGB(255, 227, 255, 227),
-                                iconColor: Color.fromARGB(255, 35, 209, 93),
-                              ),
+                              child: RoundedCard(
+                                  title: 'Deliveries',
+                                  icon: Icons.archive,
+                                  backgroundColor: Colors.white,
+                                  iconBackgroundColor:
+                                      Color.fromARGB(255, 227, 255, 227),
+                                  iconColor: Color.fromARGB(255, 35, 209, 93),
+                                  width: _screenWidth! * 0.3),
                             ),
                             InkWell(
                               onTap: () {
@@ -282,106 +328,114 @@ class _CollectorDashboardState extends State<CollectorDashboard> {
                                     arguments: _initializeDashboard);
                                 // Add your button action here
                               }, // Ripple effect color
-                              child: const RoundedCard(
-                                title: 'Collect Tea',
-                                icon: Icons.add,
-                                backgroundColor: Colors.white,
-                                iconBackgroundColor:
-                                    Color.fromARGB(255, 227, 255, 227),
-                                iconColor: Color.fromARGB(255, 35, 209, 93),
-                              ),
+                              child: RoundedCard(
+                                  title: 'Collect Tea',
+                                  icon: Icons.add,
+                                  backgroundColor: Colors.white,
+                                  iconBackgroundColor:
+                                      Color.fromARGB(255, 227, 255, 227),
+                                  iconColor: Color.fromARGB(255, 35, 209, 93),
+                                  width: _screenWidth! * 0.3),
                             ),
                           ],
                         ),
-                        const SizedBox(height: 20),
+                        SizedBox(height: _screenHeight! * 0.02),
                         // deliveries list
                         if (deliveriesResponse != null)
                           Padding(
-                            padding: const EdgeInsets.all(8.0),
+                            padding: const EdgeInsets.symmetric(vertical: 0),
                             child: Column(
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
-                                const Text(
+                                Text(
                                   'Recent Deliveries',
                                   style: TextStyle(
-                                    fontSize: 20,
+                                    fontSize: _textScaleFactor!.scale(18),
                                     fontWeight: FontWeight.bold,
                                   ),
                                 ),
-                                ListView.builder(
-                                  shrinkWrap: true,
-                                  scrollDirection: Axis.vertical,
-                                  itemCount:
-                                      deliveriesResponse?.data?.length ?? 0,
-                                  itemBuilder: (context, index) {
-                                    final delivery =
-                                        deliveriesResponse?.data[index];
-                                    final supplierName = delivery['supplied_by']
-                                            ?['supplier_name'] ??
-                                        'Unknown';
-                                    final mobile = delivery['supplied_by']
-                                                ?['supplier_phone']
-                                            ?.toString() ??
-                                        'N/A';
-                                    final netWeight =
-                                        delivery['net_weight']?.toString() ??
-                                            'N/A';
+                                Container(
+                                  height: _screenHeight! * 0.24,
+                                  child: ListView.builder(
+                                    shrinkWrap: true,
+                                    scrollDirection: Axis.vertical,
+                                    itemCount:
+                                        deliveriesResponse?.data?.length ?? 0,
+                                    itemBuilder: (context, index) {
+                                      final delivery =
+                                          deliveriesResponse?.data[index];
+                                      final supplierName =
+                                          delivery['supplied_by']
+                                                  ?['supplier_name'] ??
+                                              'Unknown';
+                                      final mobile = delivery['supplied_by']
+                                                  ?['supplier_phone']
+                                              ?.toString() ??
+                                          'N/A';
+                                      final netWeight =
+                                          delivery['net_weight']?.toString() ??
+                                              'N/A';
 
-                                    return Container(
-                                      margin: const EdgeInsets.symmetric(
-                                          vertical: 4.0),
-                                      decoration: BoxDecoration(
-                                        color: Colors.white,
-                                        boxShadow: [
-                                          BoxShadow(
-                                            color:
-                                                Colors.black.withOpacity(0.08),
-                                            blurRadius: 10,
-                                            offset: const Offset(4, 4),
-                                          ),
-                                        ],
-                                        borderRadius: BorderRadius.circular(20),
-                                      ),
-                                      child: ListTile(
-                                        contentPadding:
-                                            const EdgeInsets.symmetric(
-                                                horizontal: 16.0,
-                                                vertical: 2.0), // Add padding
-                                        tileColor: Colors
-                                            .white, // Background color for each tile
-                                        shape: RoundedRectangleBorder(
-                                          borderRadius: BorderRadius.circular(
-                                              12.0), // Rounded corners
+                                      return Container(
+                                        margin: const EdgeInsets.symmetric(
+                                            vertical: 4.0),
+                                        decoration: BoxDecoration(
+                                          color: Colors.white,
+                                          boxShadow: [
+                                            BoxShadow(
+                                              color: Colors.black
+                                                  .withOpacity(0.08),
+                                              blurRadius: 10,
+                                              offset: const Offset(4, 4),
+                                            ),
+                                          ],
+                                          borderRadius:
+                                              BorderRadius.circular(20),
                                         ),
-                                        title: Text(
-                                          supplierName,
-                                          style: TextStyle(
-                                            fontSize: 18.0,
-                                            fontWeight: FontWeight.bold,
-                                            color: Colors.green[
-                                                800], // Supplier name color
+                                        child: ListTile(
+                                          contentPadding:
+                                              const EdgeInsets.symmetric(
+                                                  horizontal: 16.0,
+                                                  vertical: 2.0), // Add padding
+                                          tileColor: Colors
+                                              .white, // Background color for each tile
+                                          shape: RoundedRectangleBorder(
+                                            borderRadius: BorderRadius.circular(
+                                                12.0), // Rounded corners
+                                          ),
+                                          title: Text(
+                                            supplierName,
+                                            style: TextStyle(
+                                              fontSize:
+                                                  _textScaleFactor!.scale(18),
+                                              fontWeight: FontWeight.bold,
+                                              color: Colors.green[
+                                                  800], // Supplier name color
+                                            ),
+                                          ),
+                                          subtitle: Text(
+                                            'Mobile: $mobile',
+                                            style: TextStyle(
+                                              fontSize:
+                                                  _textScaleFactor!.scale(14),
+                                              color: Colors
+                                                  .grey[700], // Subtitle color
+                                            ),
+                                          ),
+                                          trailing: Text(
+                                            'Net Weight: $netWeight Kg',
+                                            style: TextStyle(
+                                              fontSize:
+                                                  _textScaleFactor!.scale(14),
+                                              fontWeight: FontWeight.bold,
+                                              color: Colors.blue[
+                                                  600], // Net weight color
+                                            ),
                                           ),
                                         ),
-                                        subtitle: Text(
-                                          'Mobile: $mobile',
-                                          style: TextStyle(
-                                            fontSize: 14.0,
-                                            color: Colors
-                                                .grey[700], // Subtitle color
-                                          ),
-                                        ),
-                                        trailing: Text(
-                                          'Net Weight: $netWeight Kg',
-                                          style: TextStyle(
-                                            fontSize: 14.0,
-                                            fontWeight: FontWeight.bold,
-                                            color: Colors
-                                                .blue[600], // Net weight color
-                                          ),
-                                        ),
-                                      ),
-                                    );
-                                  },
+                                      );
+                                    },
+                                  ),
                                 ),
                               ],
                             ),
@@ -403,11 +457,11 @@ class _CollectorDashboardState extends State<CollectorDashboard> {
       automaticallyImplyLeading: false,
       backgroundColor: Colors.transparent,
       elevation: 0,
-      title: Center(
-        child: Text(
-          'Hi $collectorName !',
-          style: const TextStyle(color: Colors.white),
-        ),
+      leading: IconButton(
+        icon: const Icon(Icons.logout, color: Colors.white),
+        onPressed: () {
+          Navigator.popAndPushNamed(context, '/login');
+        },
       ),
     );
   }

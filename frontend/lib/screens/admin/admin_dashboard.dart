@@ -19,6 +19,9 @@ class _AdminDashboardState extends State<AdminDashboard> {
   Response<dynamic>? suppliersResponse, collectorsResponse;
   int supplierCount = 0, collectorCount = 0;
   bool isLoading = true;
+  double? _screenWidth, _screenHeight;
+  TextScaler? _textScaleFactor;
+  String? collector_id;
 
   @override
   void initState() {
@@ -29,16 +32,31 @@ class _AdminDashboardState extends State<AdminDashboard> {
 
   Future<void> _initializeDashboard() async {
     try {
-      final suppliersURL = '${_userServices!.base_url}/supplier';
-      final collectorsURL = '${_userServices!.base_url}/collector';
+      final userDetailsURL =
+          '${_userServices!.base_url}/collector?user_id=${_userServices!.user_id}';
+      final result = await dio.get(userDetailsURL);
+      collector_id = result.data['data'][0]['_id'];
+      _userServices!.collector_id = collector_id;
+
+      final suppliersURL = '${_userServices!.base_url}/supplier?isActive=true';
+      final collectorsURL =
+          '${_userServices!.base_url}/collector?isActive=true';
 
       final suppliers = await dio.get(suppliersURL);
       final collectors = await dio.get(collectorsURL);
 
       setState(() {
         // Getting the length of the array in the 'data' field
-        supplierCount = suppliers.data['data']?.length ?? 0;
-        collectorCount = collectors.data['data']?.length ?? 0;
+        supplierCount = suppliers.data['data']
+                ?.where((supplier) => supplier['isActive'] == true)
+                .length ??
+            0;
+        collectorCount = collectors.data['data']
+                ?.where((collector) => collector['isActive'] == true)
+                .length ??
+            0;
+        collectorCount -= 1;
+
         isLoading = false; // Loading completed
       });
     } catch (e) {
@@ -51,6 +69,9 @@ class _AdminDashboardState extends State<AdminDashboard> {
 
   @override
   Widget build(BuildContext context) {
+    _screenWidth = MediaQuery.of(context).size.width;
+    _screenHeight = MediaQuery.of(context).size.height;
+    _textScaleFactor = MediaQuery.textScalerOf(context);
     return Scaffold(
       body: Stack(
         children: [
@@ -105,7 +126,7 @@ class _AdminDashboardState extends State<AdminDashboard> {
   Widget _buildMainContent() {
     return SafeArea(
       child: Padding(
-        padding: const EdgeInsets.all(8.0),
+        padding: EdgeInsets.symmetric(horizontal: _screenWidth! * 0.02),
         child: Column(
           mainAxisAlignment: MainAxisAlignment.start,
           crossAxisAlignment: CrossAxisAlignment.center,
@@ -113,16 +134,16 @@ class _AdminDashboardState extends State<AdminDashboard> {
             _buildAppBar(),
             Expanded(
               child: Padding(
-                padding: const EdgeInsets.all(8.0),
+                padding: EdgeInsets.symmetric(horizontal: _screenWidth! * 0.02),
                 child: Column(
                   mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                   crossAxisAlignment: CrossAxisAlignment.center,
                   children: [
                     Container(
-                      height: 100,
-                      child: const Icon(
-                        Icons.dashboard,
-                        size: 100,
+                      height: _screenHeight! * 0.05,
+                      child: Icon(
+                        Icons.eco,
+                        size: _screenWidth! * 0.5,
                         color: Color(0xFF13AA52),
                       ),
                     ),
@@ -134,19 +155,23 @@ class _AdminDashboardState extends State<AdminDashboard> {
                           mainAxisAlignment: MainAxisAlignment.spaceBetween,
                           children: [
                             _buildDashboardCard(
-                                "Suppliers", supplierCount, 235),
-                            _buildDashboardCard(
-                                "Collectors", collectorCount, 110),
+                                "Suppliers", supplierCount, _screenWidth! * 0.6,
+                                height: _screenHeight! * 0.16),
+                            _buildDashboardCard("Collectors", collectorCount,
+                                _screenWidth! * 0.3,
+                                height: _screenHeight! * 0.16),
                           ],
                         ),
-                        const SizedBox(height: 20),
+                        SizedBox(height: _screenHeight! * 0.01),
                         Row(
                           mainAxisAlignment: MainAxisAlignment.spaceBetween,
                           children: [
                             _buildNavigationCard(
-                                'Suppliers', Icons.people, '/admin-suppliers'),
+                                'Suppliers', Icons.people, '/admin-suppliers',
+                                arguments: _initializeDashboard),
                             _buildNavigationCard(
-                                'Collectors', Icons.group, '/admin-collectors'),
+                                'Collectors', Icons.group, '/admin-collectors',
+                                arguments: _initializeDashboard),
                             _buildNavigationCard('Edit Price',
                                 Icons.attach_money, _showEditPriceDialog),
                           ],
@@ -163,10 +188,11 @@ class _AdminDashboardState extends State<AdminDashboard> {
     );
   }
 
-  Widget _buildDashboardCard(String title, int count, double width) {
+  Widget _buildDashboardCard(String title, int count, double width,
+      {double? height = 120}) {
     return Container(
       padding: const EdgeInsets.all(10),
-      height: 120,
+      height: height,
       width: width,
       decoration: BoxDecoration(
         color: Colors.white,
@@ -189,8 +215,9 @@ class _AdminDashboardState extends State<AdminDashboard> {
             children: [
               Text(
                 count.toString(),
-                style: const TextStyle(
-                    fontSize: 50, color: Color.fromARGB(255, 35, 209, 93)),
+                style: TextStyle(
+                    fontSize: _textScaleFactor!.scale(40),
+                    color: Color.fromARGB(255, 1, 214, 90)),
               ),
             ],
           ),
@@ -199,11 +226,12 @@ class _AdminDashboardState extends State<AdminDashboard> {
     );
   }
 
-  Widget _buildNavigationCard(String title, IconData icon, dynamic onTap) {
+  Widget _buildNavigationCard(String title, IconData icon, dynamic onTap,
+      {Object? arguments}) {
     return InkWell(
       onTap: () {
         if (onTap is String) {
-          Navigator.pushNamed(context, onTap);
+          Navigator.pushNamed(context, onTap, arguments: arguments);
         } else if (onTap is Function) {
           onTap();
         }
@@ -213,131 +241,144 @@ class _AdminDashboardState extends State<AdminDashboard> {
         icon: icon,
         backgroundColor: Colors.white,
         iconBackgroundColor: const Color.fromARGB(255, 227, 255, 227),
-        iconColor: const Color.fromARGB(255, 35, 209, 93),
+        iconColor: const Color.fromARGB(255, 1, 214, 90),
+        width: _screenWidth! * 0.295,
       ),
     );
   }
 
-void _showEditPriceDialog() {
-  final currentDate = DateTime.now();
-  final currentMonth = currentDate.month;
-  final currentYear = currentDate.year;
+  void _showEditPriceDialog() {
+    final currentDate = DateTime.now();
+    final currentMonth = currentDate.month;
+    final currentYear = currentDate.year;
 
-  TextEditingController priceController = TextEditingController();
-  bool isLoading = false; // Track the loading state
+    TextEditingController priceController = TextEditingController();
+    bool isLoading = false; // Track the loading state
 
-  showDialog(
-    context: context,
-    barrierDismissible: false, // Prevent dialog from being closed
-    builder: (BuildContext context) {
-      return StatefulBuilder(
-        builder: (context, setState) {
-          return AlertDialog(
-            title: const Text('Edit Price'),
-            content: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                // Display the current month and year
-                Text('Current Month: $currentMonth/$currentYear'),
-                const SizedBox(height: 10),
-                // Price input field
-                TextField(
-                  controller: priceController,
-                  decoration: const InputDecoration(
-                    labelText: 'Enter New Price',
-                    border: OutlineInputBorder(),
+    showDialog(
+      context: context,
+      barrierDismissible: false, // Prevent dialog from being closed
+      builder: (BuildContext context) {
+        return StatefulBuilder(
+          builder: (context, setState) {
+            return AlertDialog(
+              title: const Text('Edit Price'),
+              content: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  // Display the current month and year
+                  Text('Current Month: $currentMonth/$currentYear'),
+                  const SizedBox(height: 10),
+                  // Price input field
+                  TextField(
+                    controller: priceController,
+                    decoration: const InputDecoration(
+                      labelText: 'Enter New Price',
+                      border: OutlineInputBorder(),
+                    ),
+                    keyboardType: TextInputType.number,
                   ),
-                  keyboardType: TextInputType.number,
-                ),
-                // Loading indicator
-                if (isLoading)
-                  const Padding(
-                    padding: EdgeInsets.only(top: 20.0),
-                    child: CircularProgressIndicator(),
-                  ),
-              ],
-            ),
-            actions: [
-              // Cancel button
-              TextButton(
-                onPressed: () {
-                  if (!isLoading) {
-                    Navigator.of(context).pop();
-                  }
-                },
-                child: const Text('Cancel'),
+                  // Loading indicator
+                  if (isLoading)
+                    const Padding(
+                      padding: EdgeInsets.only(top: 20.0),
+                      child: CircularProgressIndicator(),
+                    ),
+                ],
               ),
-              // Assign price button
-              TextButton(
-                onPressed: () async {
-                  String enteredPrice = priceController.text;
-                  if (enteredPrice.isNotEmpty && !isLoading) {
-                    try {
-                      setState(() {
-                        isLoading = true; // Start loading
-                      });
-                      // Send POST request to assign price
-                      final url =
-                          '${_userServices!.base_url}/price?price=$enteredPrice&month=$currentMonth&year=$currentYear';
-                      try {
-                        final response = await dio.post(url);
-                        print(response.data);
-
-                        if (response.statusCode == 201) {
-                          // Success response handling
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            const SnackBar(
-                                content: Text('Price assigned successfully!'),
-                                backgroundColor: Colors.green),
-                          );
-                          Navigator.of(context).pop(); // Close the dialog
-                        } else {
-                          // Handle error if not success
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            const SnackBar(content: Text('Failed to assign price')),
-                          );
-                        }
-                      } on Exception catch (e) {
-                        print("error $e");
-                      }
-                    } catch (e) {
-                      // Handle any error
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(content: Text('Error assigning price')),
-                      );
-                      print('Error: $e');
-                    } finally {
-                      setState(() {
-                        isLoading = false; // Stop loading
-                      });
+              actions: [
+                // Cancel button
+                TextButton(
+                  onPressed: () {
+                    if (!isLoading) {
+                      Navigator.of(context).pop();
                     }
-                  } else {
-                    // Show an error if price is empty
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(content: Text('Please enter a price')),
-                    );
-                  }
-                },
-                child: const Text('Assign Price'),
-              ),
-            ],
-          );
-        },
-      );
-    },
-  );
-}
+                  },
+                  child: const Text('Cancel'),
+                ),
+                // Assign price button
+                TextButton(
+                  onPressed: () async {
+                    String enteredPrice = priceController.text;
+                    if (enteredPrice.isNotEmpty && !isLoading) {
+                      try {
+                        setState(() {
+                          isLoading = true; // Start loading
+                        });
+                        // Send POST request to assign price
+                        final url =
+                            '${_userServices!.base_url}/price?price=$enteredPrice&month=$currentMonth&year=$currentYear';
+                        try {
+                          final response = await dio.post(url);
+                          print(response.data);
+
+                          if (response.statusCode == 201) {
+                            // Success response handling
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              const SnackBar(
+                                  content: Text('Price assigned successfully!'),
+                                  backgroundColor: Colors.green),
+                            );
+                            Navigator.of(context).pop(); // Close the dialog
+                          } else {
+                            // Handle error if not success
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              const SnackBar(
+                                  content: Text('Failed to assign price')),
+                            );
+                          }
+                        } on Exception catch (e) {
+                          print("error $e");
+                        }
+                      } catch (e) {
+                        // Handle any error
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(
+                              content: Text('Error assigning price')),
+                        );
+                        print('Error: $e');
+                      } finally {
+                        setState(() {
+                          isLoading = false; // Stop loading
+                        });
+                      }
+                    } else {
+                      // Show an error if price is empty
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(content: Text('Please enter a price')),
+                      );
+                    }
+                  },
+                  child: const Text('Assign Price'),
+                ),
+              ],
+            );
+          },
+        );
+      },
+    );
+  }
 
   Widget _buildAppBar() {
     return AppBar(
       automaticallyImplyLeading: false,
       backgroundColor: Colors.transparent,
       elevation: 0,
-      title: Center(
-        child: const Text(
-          'Admin Dashboard',
-          style: TextStyle(color: Colors.white),
-        ),
+      leading: IconButton(
+        icon: const Icon(Icons.logout, color: Colors.white),
+        onPressed: () {
+          Navigator.popAndPushNamed(context, '/login');
+        },
+      ),
+      title: Row(
+        mainAxisAlignment: MainAxisAlignment.end,
+        children: [
+          Text(
+            'Admin Dashboard',
+            style: TextStyle(
+                color: Colors.white, fontSize: _textScaleFactor!.scale(20)),
+          ),
+        ],
       ),
     );
   }

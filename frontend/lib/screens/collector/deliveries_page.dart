@@ -1,5 +1,6 @@
 import 'dart:ui';
 import 'package:flutter/material.dart';
+import 'package:flutter/widgets.dart';
 import 'package:frontend/services/user_services.dart';
 import 'package:dio/dio.dart';
 import 'package:get_it/get_it.dart';
@@ -20,7 +21,7 @@ class _DeliveriesPageState extends State<DeliveriesPage> {
   List<Map<String, dynamic>> filteredDeliveries = [];
   final TextEditingController _searchController = TextEditingController();
   bool _isLoading = true;
-  
+   TextScaler? _textScaleFactor;
   // Initial month and year values
   int _selectedMonth = DateTime.now().month;
   int _selectedYear = DateTime.now().year;
@@ -193,10 +194,13 @@ class _DeliveriesPageState extends State<DeliveriesPage> {
 
   @override
   Widget build(BuildContext context) {
+    _textScaleFactor = MediaQuery.textScalerOf(context);
     return Scaffold(
       backgroundColor: const Color.fromARGB(255, 241, 255, 242),
       appBar: AppBar(
-        title: const Text('My Deliveries'),
+        title:  Text('My Deliveries', style: TextStyle(
+          fontSize: _textScaleFactor!.scale(20),
+        ),),
       ),
       body: Stack(
         children: [
