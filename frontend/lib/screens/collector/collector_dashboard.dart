@@ -79,6 +79,7 @@ class _CollectorDashboardState extends State<CollectorDashboard> {
             'Collector';
         isLoading = false; // Loading completed
       });
+      print('deliveries response : $deliveriesResponse');
     } catch (e) {
       print('Error fetching collector data: $e');
       setState(() {

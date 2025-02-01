@@ -26,28 +26,20 @@ const deliveryService = {
     },
     getRecentDeliveriesForCurrentMonthByCollectedBy: async (collectorId) => {
         try {
-            // Get the current month and year
-            const currentDate = new Date();
-            const currentMonth = currentDate.getMonth() + 1; // Months are zero-indexed, so add 1
-            const currentYear = currentDate.getFullYear();
-    
-            // Find deliveries based on the current month and year
-            const deliveries = await Delivery.find({
-                collected_by: collectorId,
-                createdAt: {
-                    $gte: new Date(currentYear, currentMonth - 1, 1), // Start of the current month
-                    $lt: new Date(currentYear, currentMonth, 0),      // End of the current month
-                },
-            })
-            .populate('collected_by')  // Populate the 'collected_by' field
-            .populate('supplied_by', 'supplier_name supplier_email supplier_phone')  // Populate the 'supplied_by' field
-    
-            // Sort deliveries by createdAt (newest to oldest) and limit to 5 results
-            const sortedAndLimitedDeliveries = deliveries
-                .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt)) // Sort from newest to oldest
-                .slice(0, 3); // Limit to 5 results
-    
-            return sortedAndLimitedDeliveries;
+            try {
+                const limitCount = 3; // Adjust the number of deliveries you want
+                const deliveries = await Delivery.find({ collected_by: collectorId }) // Filter by collector
+                    .sort({ createdAt: -1 }) // Get the latest deliveries first
+                    .limit(limitCount) // Limit the number of results
+                    .populate('collected_by') // Populate the 'collected_by' field
+                    .populate('supplied_by', 'supplier_name supplier_email supplier_phone'); // Populate 'supplied_by' with specific fields
+            
+                return deliveries;
+            } catch (error) {
+                console.error('Error getting latest deliveries:', error.message);
+                throw new Error('Could not get latest deliveries');
+            }
+            
         } catch (error) {
             console.error('Error fetching recent deliveries:', error.message);
             throw new Error('Could not get recent deliveries');
@@ -55,28 +47,19 @@ const deliveryService = {
     },
     getRecentDeliveriesForCurrentMonthBySuppliedBy: async (supplierId) => {
         try {
-            // Get the current month and year
-            const currentDate = new Date();
-            const currentMonth = currentDate.getMonth() + 1; // Months are zero-indexed, so add 1
-            const currentYear = currentDate.getFullYear();
-    
-            // Find deliveries based on the current month and year
-            const deliveries = await Delivery.find({
-                supplied_by: supplierId,
-                createdAt: {
-                    $gte: new Date(currentYear, currentMonth - 1, 1), // Start of the current month
-                    $lt: new Date(currentYear, currentMonth, 0),      // End of the current month
-                },
-            })
-            .populate('collected_by')  // Populate the 'collected_by' field
-            .populate('supplied_by', 'supplier_name supplier_email supplier_phone')  // Populate the 'supplied_by' field
-    
-            // Sort deliveries by createdAt (newest to oldest) and limit to 5 results
-            const sortedAndLimitedDeliveries = deliveries
-                .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt)) // Sort from newest to oldest
-                .slice(0, 3); // Limit to 5 results
-    
-            return sortedAndLimitedDeliveries;
+            try {
+                const limitCount = 3; // Adjust the number of deliveries you want
+                const deliveries = await Delivery.find({ supplied_by: supplierId }) // Filter by collector
+                    .sort({ createdAt: -1 }) // Get the latest deliveries first
+                    .limit(limitCount) // Limit the number of results
+                    .populate('collected_by') // Populate the 'collected_by' field
+                    .populate('supplied_by', 'supplier_name supplier_email supplier_phone'); // Populate 'supplied_by' with specific fields
+            
+                return deliveries;
+            } catch (error) {
+                console.error('Error getting latest deliveries:', error.message);
+                throw new Error('Could not get latest deliveries');
+            }
         } catch (error) {
             console.error('Error fetching recent deliveries:', error.message);
             throw new Error('Could not get recent deliveries');
