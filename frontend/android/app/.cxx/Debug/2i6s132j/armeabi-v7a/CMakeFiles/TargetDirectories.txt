@@ -1,2 +1,0 @@
-D:/tea_book_app/frontend/android/app/.cxx/Debug/2i6s132j/armeabi-v7a/CMakeFiles/edit_cache.dir
-D:/tea_book_app/frontend/android/app/.cxx/Debug/2i6s132j/armeabi-v7a/CMakeFiles/rebuild_cache.dir
