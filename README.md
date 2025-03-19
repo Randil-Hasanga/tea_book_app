@@ -4,7 +4,7 @@
 
 All the screens using same ui template
 
-Login Screen
+1. Login Screen
 
 ![3](https://github.com/user-attachments/assets/a2e89b67-9295-4b53-9e70-df4e41bc1160)
 
